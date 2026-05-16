@@ -123,3 +123,35 @@ vethwepl3962b1c
 vxlan-6784
 weave
 ```
+
+### Pod-okon:
+
+```sh
+# turtlesim
+kubectl exec -it -n ros2 ros2-turtlesim-6487b6dd4f-crgvj -- /bin/bash
+tcpdump -i eth0 -w tcpdump_turtlesim_eth0.pcap
+kubectl cp ros2/ros2-turtlesim-6487b6dd4f-crgvj:/tcpdump_turtlesim_eth0.pcap tcpdump_turtlesim_eth0.pcap
+
+# turtlesim-draw-square
+kubectl exec -it -n ros2 ros2-turtlesim-draw-square-58f897d556-6hlfm -- /bin/bash
+tcpdump -i eth0 -w tcpdump_turtlesim-draw-square_eth0.pcap
+kubectl cp ros2/ros2-turtlesim-draw-square-58f897d556-6hlfm:/tcpdump_turtlesim-draw-square_eth0.pcap tcpdump_turtlesim-draw-square_eth0.pcap
+
+# guac-guacamole (guacamole pod)
+kubectl exec -it -n guacamole guac-7dff9f674d-znzlj -c guac-guacamole -- /bin/bash
+apt update
+apt install net-tools tcpdump
+tcpdump -i eth0 -w tcpdump_guac-guacamole_eth0.pcap
+kubectl cp guacamole/guac-7dff9f674d-znzlj:/opt/guacamole/tcpdump_guac-guacamole_eth0.pcap tcpdump_guac-guacamole_eth0.pcap -c guac-guacamole
+
+# guac-guacamole (guacamole pod)
+# nincs bash, nincs apt, nincs semmilyen csomagkezelő, nincs tcpdump -> ebben a container-ben nem tudtam mérni
+
+# guac-postgres (guacamole pod)
+kubectl get pods -A -owide
+kubectl exec -it -n guacamole guac-7dff9f674d-znzlj -c guac-postgres -- /bin/bash
+apt update
+apt install net-tools tcpdump
+tcpdump -i eth0 -w tcpdump_guac-postgres_eth0.pcap
+kubectl cp guacamole/guac-7dff9f674d-znzlj:/tcpdump_guac-postgres_eth0.pcap tcpdump_guac-postgres_eth0.pcap -c guac-postgres
+```
