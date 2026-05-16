@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ros2-turtlesim-service
+  namespace: ros2
+spec:
+  selector:
+    app: ros2-turtlesim
+  ports:
+    - name: turtlesim-port
+      protocol: TCP
+      port: 5900
+      targetPort: 5900
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ros2-turtlesim
+  namespace: ros2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ros2-turtlesim
+  template:
+    metadata:
+      labels:
+        app: ros2-turtlesim
+    spec:
+      #nodeSelector:
+      #  node-role.kubernetes.io/robot-node: "1"
+      containers:
+      - name: ros2-turtlesim
+        securityContext:
+          runAsUser: 0  # Run as root
+        image: drigrgly/turtlesim-demo
+        env:
+        - name: ROS_DOMAIN_ID
+          value: "0"
+        - name: ROS_AUTOMATIC_DISCOVERY_RANGE
+          value: "SUBNET"
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            # Set up environment
+            export DISPLAY=:0
+
+            # Start X virtual framebuffer
+            Xvfb $DISPLAY -screen 0 1024x768x16 &
+
+            # Start ROS2 turtlesim
+            source /opt/ros/jazzy/setup.bash
+            ros2 run turtlesim turtlesim_node &
+
+            # Install missing x11vnc
+            apt install -y x11vnc
+
+            # Start VNC server
+            x11vnc -forever -shared -display :0 -rfbport 5900 -passwd password123 -bg -noxrecord
+
+            # Keep it alive
+            sleep infinity
+        ports:
+        - containerPort: 5900
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ros2-turtlesim-draw-square
+  namespace: ros2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ros2-turtlesim-draw-square
+  template:
+    metadata:
+      labels:
+        app: ros2-turtlesim-draw-square
+    spec:
+      #nodeSelector:
+      #  node-role.kubernetes.io/controller-node: "1"
+      containers:
+      - name: draw-square
+        image: drigrgly/turtlesim-demo
+        env:
+        - name: ROS_DOMAIN_ID
+          value: "0"
+        - name: ROS_AUTOMATIC_DISCOVERY_RANGE
+          value: "SUBNET"
+        stdin: true
+        tty: true
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            # Set up environment
+            export DISPLAY=:0
+
+            # Start X virtual framebuffer
+            Xvfb $DISPLAY -screen 0 1024x768x16 &
+
+            # Start ROS2 draw_key
+            source /opt/ros/jazzy/setup.bash
+            ros2 run turtlesim draw_square &
+
+            # Keep it alive
+            sleep infinity
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
