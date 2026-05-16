@@ -1,6 +1,6 @@
 ## Turtlesim Guacamole-val
 
-Kubernetes környezet előkészítése:
+**Kubernetes környezet előkészítése:**
 ```sh
 # Weavenet CNI manifest letöltése (csak egyszer kell minden új kubernetes verziónál)
 minikube start
@@ -16,7 +16,7 @@ minikube start --cni weavenet-nonpc.yaml
 minikube dashboard # külön ablakban vagy háttérben
 ```
 
-Turtlesim elindítása:
+**Turtlesim elindítása:**
 ```sh
 cd ros2
 kubectl apply -f namespace.yml
@@ -24,7 +24,7 @@ kubectl apply -f turtlesim.yml
 cd ..
 ```
 
-Guacamole elindítása:
+**Guacamole elindítása:**
 ```sh
 # guacamole/init mappa (létrehozása és) csatolása a Kubernetes környezetbe:
 mkdir -p guacamole/guacamole/init
@@ -36,8 +36,12 @@ kubectl apply -f guacamole.yml
 cd ..
 ```
 
+**Szolgáltatások elérése:**
+
 Draw square elérése: `kubectl attach -it -n ros2 <draw-square-pod-name>`
+
 Turtlesim (Guacamole) elérése: `minikube service -n guacamole --all` -> `http://192.168.49.2:30654/guacamole/` (a `/guacamole/` hozzáírása szükséges)
+
 Felhasználónév: `guacadmin`, jelszó: `guacadmin`
 
 Settings -> Connections -> Új connection hozzáadása a guacamole felületen:
@@ -48,13 +52,14 @@ Settings -> Connections -> Új connection hozzáadása a guacamole felületen:
     - Hostname: `10.244.0.17` (`ros2-turtlesim-<...>` pod IP címe)
     - Port: `5900`
     - Password: `password123`
+
 Save.
 
 Jobb felül a user menüben: Home -> majd katt a Turtlesim-re (csatlakozás)
 
 
 
-Egész törlése:
+**Egész törlése:**
 ```sh
 cd guacamole
 kubectl delete -f guacamole.yml
@@ -72,7 +77,7 @@ minikube delete
 
 
 
-Tcpdump mérések parancsai:
+**Tcpdump mérések parancsai:**
 ```sh
 # host
 sudo tcpdump -i veth0bbef79 -w tcpdump-host_veth0bbef79.pcap &
