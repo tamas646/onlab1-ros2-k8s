@@ -1,0 +1,145 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: guac-address
+  namespace: guacamole
+spec:
+  selector:
+    app: guac
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: LoadBalancer
+---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: guac-postgres-address
+#   namespace: guacamole
+# spec:
+#   selector:
+#     app: guac-postgres
+#   ports:
+#     - protocol: TCP
+#       port: 5432
+#       targetPort: 5432
+#   type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guac
+  namespace: guacamole
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: guac
+  template:
+    metadata:
+      labels:
+        app: guac
+    spec:
+      volumes:
+        - name: guac-storage-init
+      #    hostPath:
+      #      path: /home/kube/turtlesim-guacamole/guacamole/guacamole/init
+      #      type: Directory
+          emptyDir:
+            medium: Memory
+      containers: # Creating the guacamole ecosystem to allow VNC access through webbrowsers
+        - name: guac-guacd  # GUACD, Required for guacamole to run
+          image: guacamole/guacd
+          resources:
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+        - name: guac-guacamole # GUACAMOLE
+          image: guacamole/guacamole
+          securityContext:
+            runAsUser: 0  # Run as root
+          env:
+            - name: GUACD_HOSTNAME
+              value: "localhost"
+            - name: GUACD_PORT
+              value: "4822"
+            - name: POSTGRESQL_HOSTNAME
+              value: "localhost"
+            - name: POSTGRESQL_PORT
+              value: "5432"
+            - name: POSTGRESQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: guac-db-credentials
+                  key: PG_DB
+            - name: POSTGRESQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: guac-db-credentials
+                  key: PG_USER
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: guac-db-credentials
+                  key: PG_PASSWORD
+          resources:
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+        - name: guac-postgres # POSTGRES
+          image: postgres:18
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: guac-db-credentials
+                  key: PG_DB
+            - name: PGDATA
+              value: /var/lib/postgresql/18/docker
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: guac-db-credentials
+                  key: PG_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: guac-db-credentials
+                  key: PG_PASSWORD
+          volumeMounts:
+            - name: guac-storage-init
+              mountPath: /docker-entrypoint-initdb.d
+          resources:
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+      initContainers: # INITIALIZE DB FOR AUTHENTICATION
+        - name: guac-init-postgres
+          image: guacamole/guacamole
+          securityContext:
+            runAsUser: 0  # Run as root
+          command: ["/bin/bash", "-c", "/opt/guacamole/bin/initdb.sh --postgresql > /opt/guacamole/init/initdb.sql"]
+          volumeMounts:
+            - name: guac-storage-init
+              mountPath: /opt/guacamole/init
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: guac-db-credentials
+  namespace: guacamole
+type: Opaque
+data:
+  PG_DB: Z3VhY2Ftb2xlX2RiCg==
+  PG_USER: Z3VhY1VzZXIK
+  PG_PASSWORD: Z3VhY1Bhc3N3b3JkCg==
