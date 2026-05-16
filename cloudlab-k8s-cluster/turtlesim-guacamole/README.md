@@ -53,3 +53,73 @@ kubectl delete -f namespace.yml
 cd ..
 ```
 
+
+## Tcpdump mérések
+
+### Hoszt gépen
+
+```sh
+sudo tcpdump -i wlp4s0 -w tcpdump_host_wlp4s0.pcap
+```
+
+### Master és worker node-okon
+
+1. `start-capture-all.sh` szkript másolása a node-ra (pl. scp-vel)
+2. SSH belépés a node root felhasználójába (a tcpdump miatt fontos a root jogosultság)
+3. Interfészek neveinek beírása a szkriptben a megfelelő helyre
+4. Szkript futtatása: `./start-capture-all.sh`
+5. Capture fájlok visszamásolása a hosztra (pl. scp-vel)
+
+**node0** monitorozott interfészei:
+```
+datapath
+eno1
+enp5s0f0
+lo
+vethwe-bridge
+vethwe-datapath
+vethwepl076e5f5
+vethwepld418e4b
+vxlan-6784
+weave
+```
+
+**node1** monitorozott interfészei:
+```
+datapath
+eno1
+enp5s0f0
+lo
+vethwe-bridge
+vethwe-datapath
+vethweplfe2aaa0
+vxlan-6784
+weave
+```
+
+**node2** monitorozott interfészei:
+```
+datapath
+eno1
+enp5s0f0
+lo
+vethwe-bridge
+vethwe-datapath
+vethweplc5f41b6
+vethweplddb20ad
+vxlan-6784
+weave
+```
+
+**node3** monitorozott interfészei:
+```
+datapath
+eno1
+enp5s0f0
+lo
+vethwe-bridge
+vethwe-datapath
+vethwepl3962b1c
+vxlan-6784
+weave
+```
