@@ -89,6 +89,8 @@ cp start-capture-minikube.sh minikube-tcpdumps-mount/
 minikube mount minikube-tcpdumps-mount:/home/docker/tcpdumps # külön terminálban
 minikube ssh
 cp tcpdumps/start-capture-minikube.sh .
+sudo apt update
+sudo apt install net-tools tcpdump
 sudo ./start-capture-minikube.sh
 mv tcpdump-minikube_* tcpdumps/
 
